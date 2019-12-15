@@ -32,7 +32,7 @@ DynamicJsonDocument downloadJSON() {
   if (client.connect(server, 80)) {
     Serial.println("connected to server");
     // Make a HTTP request:
-    client.println("GET /arduino-get");
+    client.println("GET /xmas-arduino-get");
     client.println("Host: krivoy.co.uk");
     client.println("Connection: close");
     client.println();

@@ -7,8 +7,8 @@
 #define PCA9540B_ADDRESS    0x70       //0x70
 #define DRIVER_U2_ADDRESS   0b1100000       //0x60
 #define DRIVER_U3_ADDRESS   0b1100011       //0x63
-#define DRIVER_U4_ADDRESS   0b1100001       //0x61
-#define DRIVER_U5_ADDRESS   0b1100010       //0x62
+#define DRIVER_U5_ADDRESS   0b1100001       //0x61
+#define DRIVER_U4_ADDRESS   0b1100010       //0x62
 
 #define READ_ADDRES         0b00000001
 #define WRITE_ADDRESS       0b00000000
@@ -59,6 +59,8 @@ void setup() {
   Serial.println(doc["data"][0].as<int>());
   Serial.println(doc["data"][1].as<int>());
   Serial.println(doc["data"][2].as<int>());
+
+
   
   Wire.beginTransmission(DRIVER_U2_ADDRESS);
   Wire.write(CONFIG_REG);
@@ -108,21 +110,24 @@ void loop() {
   Wire.write(CHANNEL0_EN);
   Wire.endTransmission();
   delay(1);
-  for (c = 1; c < 33; c++) {
-    if (c < 9)
+  for (c = 0; c < 32; c++) {
+    char column = char(((doc["data"][c].as<unsigned int>()) & (0xFF)));
+    column = flipByte(column);
+    if (c < 8)
       Wire.beginTransmission(DRIVER_U2_ADDRESS);
-    else if (c < 17)
+    else if (c < 16)
       Wire.beginTransmission(DRIVER_U3_ADDRESS);
-    else if (c < 25)
+    else if (c < 24)
       Wire.beginTransmission(DRIVER_U4_ADDRESS);
     else
       Wire.beginTransmission(DRIVER_U5_ADDRESS);
-    Wire.write((c % 8) + 1);
-    Wire.write(byte(((doc["data"][c-1].as<int>()) & (0xFF00)) >> 8));
+    Wire.write((c % 8) + COLUMN_DATA1);
+    //Wire.write(rotl(unsigned char(((doc["data"][c].as<unsigned int>()) & (0xFF00)) >> 8)));
+    Wire.write(column);
     Wire.write(byte(UPDATE_COLUMN));
     Wire.write(255);
     Wire.endTransmission();
-    delay(10);
+    delay(1);
     //Serial.read();
   }
   Wire.begin();
@@ -130,22 +135,34 @@ void loop() {
   Wire.write(CHANNEL1_EN);
   Wire.endTransmission();
   delay(1);
-  for (c = 1; c < 33; c++) {
-    if (c < 9)
+  for (c = 0; c < 32; c++) {
+    char column = char(((doc["data"][c].as<unsigned int>()) & (0xFF00)) >> 8);
+    column = flipByte(column);
+    if (c < 8)
       Wire.beginTransmission(DRIVER_U2_ADDRESS);
-    else if (c < 17)
+    else if (c < 16)
       Wire.beginTransmission(DRIVER_U3_ADDRESS);
-    else if (c < 25)
+    else if (c < 24)
       Wire.beginTransmission(DRIVER_U4_ADDRESS);
     else
       Wire.beginTransmission(DRIVER_U5_ADDRESS);
-    Wire.write((c % 8) + 1);
-    Wire.write(byte(((doc["data"][c-1].as<int>()) & (0xFF))));
+    Wire.write((c % 8) + COLUMN_DATA1);
+    //Wire.write(char(((doc["data"][c].as<unsigned int>()) & (0xFF))));
+    Wire.write(column);
     Wire.write(byte(UPDATE_COLUMN));
     Wire.write(255);
     Wire.endTransmission();
-    delay(10);
+    delay(1);
     //Serial.read();
   }
   while(1);
 }
+
+char flipByte(char c)
+     {
+       c = ((c>>1)&0x55)|((c<<1)&0xAA);
+       c = ((c>>2)&0x33)|((c<<2)&0xCC);
+       c = (c>>4) | (c<<4) ;
+
+       return c;
+     }
