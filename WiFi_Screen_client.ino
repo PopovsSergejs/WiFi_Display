@@ -1,12 +1,12 @@
- ///////please enter your sensitive data in the Secret tab/arduino_secrets.h
+///////please enter your sensitive data in the Secret tab/arduino_secrets.h
 char ssid[] = SECRET_SSID;        // your network SSID (name)
 char pass[] = SECRET_PASS;    // your network password (use for WPA, or use as key for WEP)
 
-char server[] = "krivoy.co.uk";
+char server[] = "api.telegram.org";
 
 int status = WL_IDLE_STATUS;
 
-WiFiClient client;
+WiFiSSLClient client;
 
 void connectToWiFi()  {
   //Check for WiFi Module
@@ -29,23 +29,47 @@ void connectToWiFi()  {
 }
 
 DynamicJsonDocument downloadJSON() {
-  if (client.connect(server, 80)) {
+  Serial.println("YOU ARE HERE!!!!");
+  Serial.println("\nStarting connection to server...");
+  // if you get a connection, report back via serial:
+
+
+
+
+
+
+
+  if (client.connect(server, 443)) {
     Serial.println("connected to server");
     // Make a HTTP request:
-    client.println("GET /xmas-arduino-get");
-    client.println("Host: krivoy.co.uk");
+    client.print("GET /bot1025954619:AAEVIvRXUEz_hwkIzzY_iMIzUGrNrJxsLTw/getUpdates");
+    if (update_ID)  {
+      client.print("?offset=");
+      client.print(String(update_ID, DEC));
+    }
+    client.println(" HTTP/1.1");
+    client.println("Host: api.telegram.org");
     client.println("Connection: close");
     client.println();
   }
-  while(!client.available());
-  
-  DynamicJsonDocument doc(2048);
-  // Parse JSON object
-  DeserializationError error = deserializeJson(doc, client);
+  while (!client.available());
+  char counter = 0;
+  while (counter != 11) {
+    char c = client.read();
+    if (c == '\n')  {
+      counter++;
+    }
+      
+  }
+
+
+    DynamicJsonDocument doc(8192);
+    // Parse JSON object
+    DeserializationError error = deserializeJson(doc, client);
   if (error) {
     Serial.print(F("deserializeJson() failed: "));
-    Serial.println(error.c_str());
-  }
+      Serial.println(error.c_str());
+    }
   return doc;
 }
 
